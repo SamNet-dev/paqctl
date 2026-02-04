@@ -712,6 +712,198 @@ export ALL_PROXY=socks5://127.0.0.1:1080
 
 ---
 
+## Offline/Manual Installation (If GitHub is Blocked)
+
+Can't download from GitHub? (e.g., behind DPI/firewall in Iran, China, etc.)
+
+No problem! Paqet is just **one small file** (~8MB). Download it somewhere else and copy it over.
+
+---
+
+### Step 1: Get your server info first
+
+On your **server** (VPS), run:
+```bash
+sudo paqctl info
+```
+
+Write down these 3 things:
+```
+Server IP:    _______________  (e.g., 185.1.2.3)
+Port:         _______________  (e.g., 8443)
+Key:          _______________  (e.g., mySecretKey123)
+```
+
+---
+
+### Step 2: Download paqet binary
+
+Do this on a machine that CAN access GitHub (your VPS, a friend's computer, VPN, etc.)
+
+**Go to:** https://github.com/hanselime/paqet/releases
+
+> **Note:** Check for the latest version. Examples below use v1.0.0-alpha.13 - use newer if available.
+
+**Click to download the right file for your CLIENT machine:**
+
+| Your Client OS | Download this file |
+|----------------|-------------------|
+| Windows | `paqet-windows-amd64-v1.0.0-alpha.13.zip` |
+| Linux (most computers) | `paqet-linux-amd64-v1.0.0-alpha.13.tar.gz` |
+| Linux (Raspberry Pi, ARM) | `paqet-linux-arm64-v1.0.0-alpha.13.tar.gz` |
+| macOS (Intel) | `paqet-darwin-amd64-v1.0.0-alpha.13.tar.gz` |
+| macOS (M1/M2/M3) | `paqet-darwin-arm64-v1.0.0-alpha.13.tar.gz` |
+
+---
+
+### Step 3: Extract the binary
+
+**On Linux/macOS:**
+```bash
+tar -xzf paqet-linux-amd64-v1.0.0-alpha.13.tar.gz
+mv paqet_linux_amd64 paqet
+chmod +x paqet
+```
+
+**On Windows:**
+- Right-click the ZIP file → "Extract All"
+- You'll get `paqet.exe`
+
+---
+
+### Step 4: Transfer to your client machine
+
+Pick ONE method:
+
+**Method A - SCP (if you downloaded on your VPS):**
+```bash
+# Run this FROM your VPS
+scp paqet user@CLIENT_IP:/home/user/paqet
+```
+
+**Method B - USB Drive:**
+1. Copy `paqet` (or `paqet.exe`) to USB
+2. Plug USB into client machine
+3. Copy file to a folder (e.g., `C:\paqet\` on Windows or `~/paqet/` on Linux)
+
+**Method C - SFTP/FileZilla:**
+1. Connect to your client machine
+2. Upload the `paqet` file
+
+---
+
+### Step 5: Create config file
+
+On your **client machine**, create a file called `config.yaml` in the same folder as paqet.
+
+**Copy this and fill in your values:**
+
+```yaml
+role: "client"
+
+socks5:
+  port: 1080
+
+network:
+  interface: ""
+
+server:
+  address: "SERVER_IP:PORT"
+
+transport:
+  mode: "fast"
+  key: "YOUR_KEY"
+```
+
+**Example with real values:**
+```yaml
+role: "client"
+
+socks5:
+  port: 1080
+
+network:
+  interface: ""
+
+server:
+  address: "185.1.2.3:8443"
+
+transport:
+  mode: "fast"
+  key: "mySecretKey123"
+```
+
+---
+
+### Step 6: Run paqet
+
+**Linux/macOS:**
+```bash
+cd ~/paqet              # Go to the folder with paqet
+sudo ./paqet -config config.yaml
+```
+
+**Windows (must run as Administrator):**
+1. Open Command Prompt as Administrator
+2. Run:
+```cmd
+cd C:\paqet
+paqet.exe -config config.yaml
+```
+
+You should see:
+```
+[INFO] Starting paqet client...
+[INFO] Connecting to server...
+[INFO] SOCKS5 proxy listening on 127.0.0.1:1080
+```
+
+---
+
+### Step 7: Configure your browser
+
+**Firefox:**
+1. Settings → Network Settings → Settings...
+2. Select "Manual proxy configuration"
+3. SOCKS Host: `127.0.0.1`  Port: `1080`
+4. Select "SOCKS v5"
+5. Check "Proxy DNS when using SOCKS v5"
+6. Click OK
+
+**Chrome (use system proxy or extension like SwitchyOmega)**
+
+---
+
+### Step 8: Test it!
+
+1. Go to https://whatismyipaddress.com
+2. Your IP should show your **VPS IP**, not your real IP
+3. Try accessing blocked sites
+
+---
+
+### Troubleshooting
+
+**"Connection refused" or timeout:**
+- Check server is running: `sudo paqctl status` on VPS
+- Check IP/port/key are correct in config.yaml
+- Check firewall allows the port on VPS
+
+**"Permission denied":**
+- Linux/macOS: Must run with `sudo`
+- Windows: Must run as Administrator
+
+**To stop paqet:**
+- Press `Ctrl+C` in the terminal
+
+### Notes
+
+- You don't need `paqctl` script for basic usage - paqet runs standalone
+- Server and client versions should match
+- For GFK, the process is more complex (needs Python) - use paqet if possible
+
+---
+
 ## Server Management
 
 After installing on your VPS, use these commands:
@@ -1372,6 +1564,192 @@ sudo python3 mainclient.py
 Firefox: Settings → Network Settings → Manual proxy → SOCKS5 `127.0.0.1:1080` یا `127.0.0.1:14000`
 
 </details>
+
+---
+
+## نصب آفلاین/دستی (اگر GitHub مسدود است)
+
+نمی‌توانید از GitHub دانلود کنید؟ (مثلاً پشت فایروال در ایران، چین و غیره)
+
+مشکلی نیست! Paqet فقط **یک فایل کوچک** (~۸ مگابایت) است. از جای دیگر دانلود کنید و کپی کنید.
+
+---
+
+### مرحله ۱: اول اطلاعات سرور را بگیرید
+
+روی **سرور** (VPS)، این دستور را بزنید:
+```bash
+sudo paqctl info
+```
+
+این ۳ چیز را یادداشت کنید:
+```
+آی‌پی سرور:    _______________  (مثلاً 185.1.2.3)
+پورت:         _______________  (مثلاً 8443)
+کلید:          _______________  (مثلاً mySecretKey123)
+```
+
+---
+
+### مرحله ۲: دانلود باینری paqet
+
+این کار را روی دستگاهی انجام دهید که به GitHub دسترسی دارد (VPS شما، کامپیوتر دوست، VPN و غیره)
+
+**بروید به:** https://github.com/hanselime/paqet/releases
+
+> **نکته:** آخرین نسخه را چک کنید. مثال‌های زیر از v1.0.0-alpha.13 استفاده می‌کنند - اگر جدیدتر موجود است آن را بگیرید.
+
+**فایل مناسب سیستم کلاینت خود را دانلود کنید:**
+
+| سیستم کلاینت شما | این فایل را دانلود کنید |
+|-----------------|----------------------|
+| ویندوز | `paqet-windows-amd64-v1.0.0-alpha.13.zip` |
+| لینوکس (اکثر کامپیوترها) | `paqet-linux-amd64-v1.0.0-alpha.13.tar.gz` |
+| لینوکس (Raspberry Pi, ARM) | `paqet-linux-arm64-v1.0.0-alpha.13.tar.gz` |
+| مک (Intel) | `paqet-darwin-amd64-v1.0.0-alpha.13.tar.gz` |
+| مک (M1/M2/M3) | `paqet-darwin-arm64-v1.0.0-alpha.13.tar.gz` |
+
+---
+
+### مرحله ۳: استخراج باینری
+
+**در لینوکس/مک:**
+```bash
+tar -xzf paqet-linux-amd64-v1.0.0-alpha.13.tar.gz
+mv paqet_linux_amd64 paqet
+chmod +x paqet
+```
+
+**در ویندوز:**
+- روی فایل ZIP راست‌کلیک کنید ← "Extract All"
+- فایل `paqet.exe` را خواهید داشت
+
+---
+
+### مرحله ۴: انتقال به دستگاه کلاینت
+
+یک روش را انتخاب کنید:
+
+**روش A - SCP (اگر روی VPS دانلود کردید):**
+```bash
+# این را روی VPS خود اجرا کنید
+scp paqet user@CLIENT_IP:/home/user/paqet
+```
+
+**روش B - فلش USB:**
+1. فایل `paqet` (یا `paqet.exe`) را به USB کپی کنید
+2. USB را به دستگاه کلاینت وصل کنید
+3. فایل را به یک پوشه کپی کنید (مثلاً `C:\paqet\` در ویندوز یا `~/paqet/` در لینوکس)
+
+**روش C - SFTP/FileZilla:**
+1. به دستگاه کلاینت متصل شوید
+2. فایل `paqet` را آپلود کنید
+
+---
+
+### مرحله ۵: ساخت فایل کانفیگ
+
+روی **دستگاه کلاینت**، یک فایل به نام `config.yaml` در همان پوشه‌ای که paqet است بسازید.
+
+**این را کپی کنید و مقادیر خود را بگذارید:**
+
+```yaml
+role: "client"
+
+socks5:
+  port: 1080
+
+network:
+  interface: ""
+
+server:
+  address: "IP_SERVER:PORT"
+
+transport:
+  mode: "fast"
+  key: "YOUR_KEY"
+```
+
+**مثال با مقادیر واقعی:**
+```yaml
+role: "client"
+
+socks5:
+  port: 1080
+
+network:
+  interface: ""
+
+server:
+  address: "185.1.2.3:8443"
+
+transport:
+  mode: "fast"
+  key: "mySecretKey123"
+```
+
+---
+
+### مرحله ۶: اجرای paqet
+
+**لینوکس/مک:**
+```bash
+cd ~/paqet              # به پوشه paqet بروید
+sudo ./paqet -config config.yaml
+```
+
+**ویندوز (باید به عنوان Administrator اجرا شود):**
+1. Command Prompt را به عنوان Administrator باز کنید
+2. اجرا کنید:
+```cmd
+cd C:\paqet
+paqet.exe -config config.yaml
+```
+
+باید این را ببینید:
+```
+[INFO] Starting paqet client...
+[INFO] Connecting to server...
+[INFO] SOCKS5 proxy listening on 127.0.0.1:1080
+```
+
+---
+
+### مرحله ۷: پیکربندی مرورگر
+
+**فایرفاکس:**
+1. Settings ← Network Settings ← Settings...
+2. "Manual proxy configuration" را انتخاب کنید
+3. SOCKS Host: `127.0.0.1`  Port: `1080`
+4. "SOCKS v5" را انتخاب کنید
+5. تیک "Proxy DNS when using SOCKS v5" را بزنید
+6. OK کنید
+
+**کروم (از system proxy یا افزونه SwitchyOmega استفاده کنید)**
+
+---
+
+### مرحله ۸: تست کنید!
+
+1. بروید به https://whatismyipaddress.com
+2. آی‌پی شما باید **آی‌پی VPS** باشد، نه آی‌پی واقعی شما
+3. سایت‌های مسدود را امتحان کنید
+
+---
+
+### عیب‌یابی
+
+**"Connection refused" یا تایم‌اوت:**
+- چک کنید سرور اجرا باشد: `sudo paqctl status` روی VPS
+- چک کنید IP/پورت/کلید در config.yaml درست باشد
+- چک کنید فایروال VPS پورت را اجازه دهد
+
+**"Permission denied":**
+- لینوکس/مک: باید با `sudo` اجرا شود
+- ویندوز: باید به عنوان Administrator اجرا شود
+
+**برای توقف paqet:**
+- در ترمینال `Ctrl+C` بزنید
 
 ---
 
