@@ -454,7 +454,7 @@ tar -xzf paqet-darwin-amd64-v1.0.0-alpha.12.tar.gz
 # tar -xzf paqet-darwin-arm64-v1.0.0-alpha.12.tar.gz
 
 # Make executable
-chmod +x paqet
+chmod +x paqet_darwin_amd64
 ```
 
 #### Step 3: Create Config File
@@ -623,7 +623,7 @@ Then run GFK from within the venv.
 mkdir -p ~/paqet && cd ~/paqet
 curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet-linux-amd64-v1.0.0-alpha.12.tar.gz
 tar -xzf paqet-linux-amd64-v1.0.0-alpha.12.tar.gz
-chmod +x paqet
+chmod +x paqet_linux_amd64
 
 # Create config
 cat > config.yaml << 'EOF'
@@ -1162,7 +1162,7 @@ tar -xzf paqet-darwin-amd64-v1.0.0-alpha.12.tar.gz
 # curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet-darwin-arm64-v1.0.0-alpha.12.tar.gz
 # tar -xzf paqet-darwin-arm64-v1.0.0-alpha.12.tar.gz
 
-chmod +x paqet
+chmod +x paqet_darwin_amd64
 ```
 
 #### مرحله ۳: ایجاد فایل پیکربندی
@@ -1251,7 +1251,7 @@ sudo python3 mainclient.py
 mkdir -p ~/paqet && cd ~/paqet
 curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet-linux-amd64-v1.0.0-alpha.12.tar.gz
 tar -xzf paqet-linux-amd64-v1.0.0-alpha.12.tar.gz
-chmod +x paqet
+chmod +x paqet_linux_amd64
 
 # ایجاد config
 cat > config.yaml << 'EOF'
