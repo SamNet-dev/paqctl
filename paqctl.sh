@@ -12,7 +12,7 @@
 # ║  * Auto-start on boot via systemd/OpenRC/SysVinit                 ║
 # ║  * Easy management via CLI or interactive menu                    ║
 # ║                                                                   ║
-# ║  Paqet: https://github.com/SamNet-dev/paqet                        ║
+# ║  Paqet: https://github.com/SamNet-dev/paqctl                       ║
 # ╚═══════════════════════════════════════════════════════════════════╝
 #
 # Usage:
@@ -35,7 +35,7 @@ VERSION="1.0"
 PAQET_VERSION_PINNED="v1.0.0-alpha.12"
 XRAY_VERSION_PINNED="v26.2.4"
 
-PAQET_REPO="SamNet-dev/paqet"
+PAQET_REPO="SamNet-dev/paqctl"
 PAQET_API_URL="https://api.github.com/repos/${PAQET_REPO}/releases/latest"
 INSTALL_DIR="${INSTALL_DIR:-/opt/paqctl}"
 BACKUP_DIR="$INSTALL_DIR/backups"
@@ -1716,7 +1716,7 @@ XRAY_VERSION_PINNED="v26.2.4"
 
 INSTALL_DIR="REPLACE_ME_INSTALL_DIR"
 BACKUP_DIR="$INSTALL_DIR/backups"
-PAQET_REPO="SamNet-dev/paqet"
+PAQET_REPO="SamNet-dev/paqctl"
 PAQET_API_URL="https://api.github.com/repos/${PAQET_REPO}/releases/latest"
 GFK_REPO="GFW-knocker/gfw_resist_tcp_proxy"
 GFK_BRANCH="main"

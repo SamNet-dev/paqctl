@@ -395,10 +395,10 @@ macOS requires manual setup since there's no automated script yet.
 mkdir -p ~/paqet && cd ~/paqet
 
 # Download latest release (check GitHub for current version)
-curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_darwin_amd64
+curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_darwin_amd64
 
 # For Apple Silicon (M1/M2/M3):
-# curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_darwin_arm64
+# curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_darwin_arm64
 
 # Make executable
 chmod +x paqet_darwin_*
@@ -568,7 +568,7 @@ Then run GFK from within the venv.
 ```bash
 # Download paqet
 mkdir -p ~/paqet && cd ~/paqet
-curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_linux_amd64
+curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_linux_amd64
 chmod +x paqet_linux_amd64
 
 # Create config
@@ -709,7 +709,7 @@ MIT License - See [LICENSE](LICENSE) file.
 
 ## Acknowledgments
 
-- [paqet](https://github.com/SamNet-dev/paqet) - KCP-based proxy with built-in SOCKS5
+- [paqet](https://github.com/SamNet-dev/paqctl) - KCP-based proxy with built-in SOCKS5
 - [GFW-knocker](https://github.com/GFW-knocker/gfw_resist_tcp_proxy) - Violated TCP technique
 - [aioquic](https://github.com/aiortc/aioquic) - QUIC protocol implementation
 - [scapy](https://scapy.net/) - Packet manipulation library
@@ -1069,10 +1069,10 @@ macOS نیاز به راه‌اندازی دستی دارد.
 mkdir -p ~/paqet && cd ~/paqet
 
 # برای Intel Mac:
-curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_darwin_amd64
+curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_darwin_amd64
 
 # برای Apple Silicon (M1/M2/M3):
-curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_darwin_arm64
+curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_darwin_arm64
 
 chmod +x paqet_darwin_*
 ```
@@ -1161,7 +1161,7 @@ sudo python3 mainclient.py
 ```bash
 # دانلود paqet
 mkdir -p ~/paqet && cd ~/paqet
-curl -LO https://github.com/SamNet-dev/paqet/releases/download/v1.0.0-alpha.12/paqet_linux_amd64
+curl -LO https://github.com/SamNet-dev/paqctl/releases/download/v1.0.0-alpha.12/paqet_linux_amd64
 chmod +x paqet_linux_amd64
 
 # ایجاد config
@@ -1279,7 +1279,7 @@ https://github.com/SamNet-dev/paqctl
 
 ## قدردانی
 
-- [paqet](https://github.com/SamNet-dev/paqet) - پروکسی مبتنی بر KCP با SOCKS5 داخلی
+- [paqet](https://github.com/SamNet-dev/paqctl) - پروکسی مبتنی بر KCP با SOCKS5 داخلی
 - [GFW-knocker](https://github.com/GFW-knocker/gfw_resist_tcp_proxy) - تکنیک TCP نقض‌شده
 - [aioquic](https://github.com/aiortc/aioquic) - پیاده‌سازی QUIC
 - [scapy](https://scapy.net/) - کتابخانه دستکاری بسته
