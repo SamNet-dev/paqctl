@@ -4751,10 +4751,10 @@ except: pass
             case "$cmd" in
                 /status)  send_message "$(build_report)" ;;
                 /health)  send_message "$(/usr/local/bin/paqctl health 2>&1 | head -30)" ;;
-                /restart) /usr/local/bin/paqctl restart 2>&1; send_message "🔄 paqet restarted" ;;
-                /stop)    /usr/local/bin/paqctl stop 2>&1; send_message "⏹ paqet stopped" ;;
-                /start)   /usr/local/bin/paqctl start 2>&1; send_message "▶️ paqet started" ;;
-                /version) send_message "📦 paqet: ${PAQET_VERSION:-unknown} | paqctl: ${PAQCTL_VERSION:-unknown}" ;;
+                /restart) /usr/local/bin/paqctl restart 2>&1; send_message "🔄 Service restarted" ;;
+                /stop)    /usr/local/bin/paqctl stop 2>&1; send_message "⏹ Service stopped" ;;
+                /start)   /usr/local/bin/paqctl start 2>&1; send_message "▶️ Service started" ;;
+                /version) send_message "📦 Version: ${PAQET_VERSION:-unknown} | paqctl: ${PAQCTL_VERSION:-unknown}" ;;
             esac
         done <<< "$cmds"
     fi
@@ -4783,6 +4783,9 @@ except: print(0)
 " <<< "$init_response" 2>/dev/null)
 fi
 LAST_UPDATE_ID=${LAST_UPDATE_ID:-0}
+
+# Send startup notification
+send_message "🚀 *Telegram notifications started*"$'\n'"Reports every ${TELEGRAM_INTERVAL}h | Alerts: ${TELEGRAM_ALERTS_ENABLED}"
 
 while true; do
     # Reload settings periodically (safe parser, no code execution)
