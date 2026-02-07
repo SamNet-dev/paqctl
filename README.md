@@ -106,6 +106,97 @@ YOUR COMPUTER                YOUR VPS                   INTERNET
 
 ---
 
+<details>
+<summary><strong>Using GFK with an Existing Xray Panel (3x-ui, Marzban, etc.)</strong></summary>
+
+If you already have an Xray panel on your server, GFK works alongside it without conflicts. GFK is a raw TCP forwarder — it tunnels traffic to whatever service is running on your target port.
+
+**How paqctl handles existing Xray:**
+
+| Scenario | What happens |
+|---|---|
+| **No Xray installed** | paqctl installs Xray with a SOCKS5 proxy automatically |
+| **Xray panel running, target port is listening** | paqctl skips Xray setup, GFK forwards to your panel's inbound |
+| **Xray running, target port NOT listening** | paqctl warns you — configure your panel to listen on that port |
+| **Xray installed but not running** | paqctl installs its own SOCKS5 (same as fresh install) |
+
+**Step-by-step setup (panel on both servers):**
+
+Assume your **foreign server** has a panel with vmess/vless inbound on port `443`, and your **Iran server** has a panel with outbound to the foreign server.
+
+**1. Install paqctl on the foreign server (server role):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh | sudo bash
+```
+- Choose **server** role
+- Set port mapping: `14000:443` (where `443` is your panel's inbound port)
+- paqctl detects Xray is running and skips SOCKS5 — your panel stays untouched
+
+**2. Install paqctl on the Iran server (client role):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh | sudo bash
+```
+- Choose **client** role
+- Set the **same** port mapping: `14000:443`
+- Use the same auth code from the server setup
+
+**3. Update your Iran panel outbound to route through GFK:**
+
+In your Iran panel (3x-ui, Marzban, etc.), change the outbound that connects to the foreign server:
+
+**Before** (direct connection — blocked by DPI):
+```json
+{
+  "tag": "vmess_out",
+  "protocol": "vmess",
+  "settings": {
+    "vnext": [{
+      "address": "FOREIGN_SERVER_IP",
+      "port": 443,
+      "users": [{"id": "your-uuid", "security": "auto"}]
+    }]
+  }
+}
+```
+
+**After** (routed through GFK tunnel):
+```json
+{
+  "tag": "vmess_out",
+  "protocol": "vmess",
+  "settings": {
+    "vnext": [{
+      "address": "127.0.0.1",
+      "port": 14000,
+      "users": [{"id": "your-uuid", "security": "auto"}]
+    }]
+  }
+}
+```
+
+The key changes:
+- `address`: from `FOREIGN_SERVER_IP` to `127.0.0.1`
+- `port`: from `443` to `14000` (the VIO port from your mapping)
+
+**4. Traffic flow:**
+```
+End user --> Iran panel inbound --> Iran panel outbound (127.0.0.1:14000)
+  --> GFK client (VIO port) --> QUIC tunnel over violated TCP
+  --> Foreign GFK server --> 127.0.0.1:443 (foreign panel inbound) --> Internet
+```
+
+**Multiple ports:** If your panel uses multiple ports, map them all:
+```
+14000:443,14001:8080,14002:2020
+```
+Then create separate outbounds in your Iran panel for each port (14000, 14001, 14002).
+
+> **Note:** The "Firewall: VIO port blocked" status message (shown in green) is **normal and correct**. It means the firewall is properly configured for GFK's raw socket to work.
+
+</details>
+
+---
+
 ## Quick Start
 
 ### 1. Server Setup (Linux VPS)
@@ -1098,6 +1189,97 @@ MIT License - See [LICENSE](LICENSE) file.
 1. **TCP نقض‌شده**: بسته‌های TCP ارسال می‌کند که عمداً "خراب" هستند
 2. **تونل QUIC**: درون این بسته‌ها، یک اتصال QUIC داده‌های واقعی را حمل می‌کند
 3. **بکند Xray**: روی سرور، Xray سرویس SOCKS5 را ارائه می‌دهد
+
+---
+
+<details>
+<summary><strong>استفاده از GFK با پنل Xray موجود (3x-ui، Marzban و غیره)</strong></summary>
+
+اگر از قبل پنل Xray روی سرور خود دارید، GFK بدون تداخل در کنار آن کار می‌کند. GFK یک فورواردر خام TCP است — ترافیک را به هر سرویسی که روی پورت مقصد شما اجرا می‌شود تونل می‌کند.
+
+**رفتار paqctl با Xray موجود:**
+
+| سناریو | چه اتفاقی می‌افتد |
+|---|---|
+| **Xray نصب نیست** | paqctl به صورت خودکار Xray با پروکسی SOCKS5 نصب می‌کند |
+| **پنل Xray در حال اجراست، پورت مقصد فعال است** | paqctl نصب Xray را رد می‌کند، GFK به اینباند پنل شما فوروارد می‌کند |
+| **Xray در حال اجراست، پورت مقصد فعال نیست** | paqctl هشدار می‌دهد — پنل خود را روی آن پورت تنظیم کنید |
+| **Xray نصب شده ولی اجرا نمی‌شود** | paqctl SOCKS5 خودش را نصب می‌کند (مثل نصب جدید) |
+
+**راهنمای گام به گام (پنل روی هر دو سرور):**
+
+فرض کنید **سرور خارج** پنلی با اینباند vmess/vless روی پورت `443` دارد و **سرور ایران** پنلی با اوتباند به سرور خارج دارد.
+
+**۱. نصب paqctl روی سرور خارج (نقش server):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh | sudo bash
+```
+- نقش **server** را انتخاب کنید
+- مپینگ پورت: `14000:443` (که `443` پورت اینباند پنل شماست)
+- paqctl تشخیص می‌دهد Xray در حال اجراست و نصب SOCKS5 را رد می‌کند — پنل شما دست نخورده می‌ماند
+
+**۲. نصب paqctl روی سرور ایران (نقش client):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/SamNet-dev/paqctl/main/paqctl.sh | sudo bash
+```
+- نقش **client** را انتخاب کنید
+- **همان** مپینگ پورت: `14000:443`
+- همان کد احراز هویت سرور را استفاده کنید
+
+**۳. اوتباند پنل ایران را به‌روزرسانی کنید تا از GFK عبور کند:**
+
+در پنل ایران (3x-ui، Marzban و غیره)، اوتباندی که به سرور خارج متصل می‌شود را تغییر دهید:
+
+**قبل** (اتصال مستقیم — توسط DPI مسدود می‌شود):
+```json
+{
+  "tag": "vmess_out",
+  "protocol": "vmess",
+  "settings": {
+    "vnext": [{
+      "address": "IP_SERVER_KHAREJ",
+      "port": 443,
+      "users": [{"id": "your-uuid", "security": "auto"}]
+    }]
+  }
+}
+```
+
+**بعد** (از طریق تونل GFK):
+```json
+{
+  "tag": "vmess_out",
+  "protocol": "vmess",
+  "settings": {
+    "vnext": [{
+      "address": "127.0.0.1",
+      "port": 14000,
+      "users": [{"id": "your-uuid", "security": "auto"}]
+    }]
+  }
+}
+```
+
+تغییرات کلیدی:
+- `address`: از `IP_SERVER_KHAREJ` به `127.0.0.1`
+- `port`: از `443` به `14000` (پورت VIO از مپینگ شما)
+
+**۴. مسیر ترافیک:**
+```
+کاربر --> اینباند پنل ایران --> اوتباند پنل ایران (127.0.0.1:14000)
+  --> GFK client (پورت VIO) --> تونل QUIC روی TCP نقض‌شده
+  --> GFK server خارج --> 127.0.0.1:443 (اینباند پنل خارج) --> اینترنت
+```
+
+**چند پورت:** اگر پنل شما از چند پورت استفاده می‌کند، همه را مپ کنید:
+```
+14000:443,14001:8080,14002:2020
+```
+سپس برای هر پورت (14000، 14001، 14002) اوتباند جداگانه در پنل ایران بسازید.
+
+> **توجه:** پیام وضعیت "Firewall: VIO port blocked" (که با رنگ سبز نمایش داده می‌شود) **عادی و صحیح** است. این به معنای آن است که فایروال به درستی برای کار raw socket در GFK تنظیم شده است.
+
+</details>
 
 ---
 

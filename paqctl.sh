@@ -1460,9 +1460,37 @@ setup_xray_for_gfk() {
     local target_port
     target_port=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f2 | cut -d, -f1)
 
-    # If xray is already running (e.g. user has a panel), don't touch it
+    # If xray is already running (e.g. user has a panel), skip SOCKS5 setup.
+    # GFK is a raw TCP forwarder — traffic goes to whatever is on the target port.
+    # The user's panel/services handle the actual proxying.
     if pgrep -x xray &>/dev/null; then
-        log_info "Xray is already running — skipping install/config to preserve existing setup"
+        XRAY_PANEL_DETECTED=true
+        log_info "Existing Xray detected — skipping SOCKS5 setup (panel will handle traffic)"
+
+        # Clean up any leftover standalone GFK xray from prior installs
+        pkill -f "xray run -c.*gfk-socks.json" 2>/dev/null || true
+        rm -f "${XRAY_CONFIG_DIR}/gfk-socks.json" 2>/dev/null
+
+        # Check all target ports from mappings
+        local mapping pairs
+        IFS=',' read -ra pairs <<< "${GFK_PORT_MAPPINGS:-14000:443}"
+        for mapping in "${pairs[@]}"; do
+            local vio_port="${mapping%%:*}"
+            local tp="${mapping##*:}"
+            if ss -tln 2>/dev/null | grep -q ":${tp} "; then
+                log_success "Port $tp is listening — GFK will forward VIO port $vio_port to this port"
+            else
+                log_warn "Port $tp is NOT listening on this server — make sure your xray panel inbound is configured on port $tp"
+            fi
+        done
+
+        echo ""
+        log_warn "ACTION REQUIRED: On your Iran server, configure the panel outbound:"
+        log_warn "  → Set address to: 127.0.0.1"
+        local first_vio
+        first_vio=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f1 | cut -d, -f1)
+        log_warn "  → Set port to: ${first_vio} (VIO port, NOT the original server port)"
+        log_warn "  See README for detailed panel configuration guide"
         return 0
     fi
 
@@ -1750,6 +1778,7 @@ if [ "\$ROLE" = "server" ]; then
     if command -v xray &>/dev/null || [ -x /usr/local/bin/xray ]; then
         if ! pgrep -f "xray run" &>/dev/null; then
             systemctl start xray 2>/dev/null || xray run -c /usr/local/etc/xray/config.json &>/dev/null &
+            sleep 2
         fi
     fi
     cd "\$GFK_DIR"
@@ -2853,6 +2882,7 @@ start_gfk_backend() {
         if command -v xray &>/dev/null || [ -x /usr/local/bin/xray ]; then
             if ! pgrep -f "xray run" &>/dev/null; then
                 systemctl start xray 2>/dev/null || xray run -c /usr/local/etc/xray/config.json &>/dev/null &
+                sleep 2
             fi
         fi
         # Run from GFK_DIR so relative script paths work
@@ -5722,7 +5752,29 @@ setup_xray_for_gfk() {
     local target_port
     target_port=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f2 | cut -d, -f1)
     if pgrep -x xray &>/dev/null; then
-        log_info "Xray is already running — skipping install/config to preserve existing setup"
+        XRAY_PANEL_DETECTED=true
+        log_info "Existing Xray detected — skipping SOCKS5 setup (panel will handle traffic)"
+        pkill -f "xray run -c.*gfk-socks.json" 2>/dev/null || true
+        rm -f "${XRAY_CONFIG_DIR}/gfk-socks.json" 2>/dev/null
+        # Check all target ports from mappings
+        local mapping pairs
+        IFS=',' read -ra pairs <<< "${GFK_PORT_MAPPINGS:-14000:443}"
+        for mapping in "${pairs[@]}"; do
+            local vio_port="${mapping%%:*}"
+            local tp="${mapping##*:}"
+            if ss -tln 2>/dev/null | grep -q ":${tp} "; then
+                log_success "Port $tp is listening — GFK will forward VIO port $vio_port to this port"
+            else
+                log_warn "Port $tp is NOT listening on this server — make sure your xray panel inbound is configured on port $tp"
+            fi
+        done
+        echo ""
+        log_warn "ACTION REQUIRED: On your Iran server, configure the panel outbound:"
+        log_warn "  → Set address to: 127.0.0.1"
+        local first_vio
+        first_vio=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f1 | cut -d, -f1)
+        log_warn "  → Set port to: ${first_vio} (VIO port, NOT the original server port)"
+        log_warn "  See README for detailed panel configuration guide"
         return 0
     fi
     install_xray || return 1
@@ -5764,11 +5816,15 @@ _install_gfk_components() {
     # Generate TLS certificates for QUIC
     generate_gfk_certs || return 1
 
+    # Setup Xray (server only — skipped if panel detected)
+    if [ "$ROLE" = "server" ]; then
+        setup_xray_for_gfk || return 1
+    fi
+
     # Generate parameters.py config
     generate_gfk_config || return 1
 
-    # Setup Xray (install, configure, start)
-    setup_xray_for_gfk || return 1
+    save_settings
 
     log_success "GFK components installed"
 }
@@ -5802,6 +5858,26 @@ uninstall_paqctl() {
     # Stop services
     stop_paqet
     stop_telegram_service
+
+    # Stop standalone GFK xray and clean up config
+    pkill -f "xray run -c.*gfk-socks.json" 2>/dev/null || true
+    rm -f /usr/local/etc/xray/gfk-socks.json 2>/dev/null
+    # Remove gfk-socks inbound from panel's xray config if present
+    if [ -f "$XRAY_CONFIG_FILE" ] && command -v python3 &>/dev/null; then
+        python3 -c "
+import json, sys
+try:
+    with open(sys.argv[1], 'r') as f:
+        cfg = json.load(f)
+    orig_len = len(cfg.get('inbounds', []))
+    cfg['inbounds'] = [i for i in cfg.get('inbounds', []) if i.get('tag') != 'gfk-socks']
+    if len(cfg['inbounds']) < orig_len:
+        with open(sys.argv[1], 'w') as f:
+            json.dump(cfg, f, indent=2)
+except: pass
+" "$XRAY_CONFIG_FILE" 2>/dev/null
+        systemctl restart xray 2>/dev/null || true
+    fi
 
     # Remove ALL paqctl firewall rules (tagged with "paqctl" comment)
     log_info "Removing firewall rules..."
@@ -6696,7 +6772,7 @@ main() {
         download_gfk || { log_error "Failed to download GFK"; exit 1; }
         generate_gfk_certs || { log_error "Failed to generate certificates"; exit 1; }
         if [ "$ROLE" = "server" ]; then
-            # Install Xray to provide SOCKS5 proxy on the target port
+            # Install Xray to provide SOCKS5 proxy on the target port (skipped if panel detected)
             setup_xray_for_gfk || { log_error "Failed to setup Xray"; exit 1; }
         elif [ "$ROLE" = "client" ]; then
             install_microsocks || { log_error "Failed to install microsocks"; exit 1; }
@@ -6790,9 +6866,18 @@ main() {
             _xray_port=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f2 | cut -d, -f1)
             echo -e "  VIO port:   ${BOLD}${GFK_VIO_PORT}${NC}"
             echo -e "  QUIC port:  ${BOLD}${GFK_QUIC_PORT}${NC}"
-            echo -e "  Xray:       ${BOLD}127.0.0.1:${_xray_port} (SOCKS5)${NC}"
-            echo ""
-            echo -e "  ${GREEN}✓ Xray SOCKS5 proxy installed and running${NC}"
+            if [ "${XRAY_PANEL_DETECTED:-false}" = "true" ]; then
+                echo -e "  Xray:       ${BOLD}Existing panel detected (forwarding to port ${_xray_port})${NC}"
+                echo ""
+                echo -e "  ${GREEN}✓ GFK will forward traffic to your existing panel${NC}"
+                local _first_vio
+                _first_vio=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f1 | cut -d, -f1)
+                echo -e "  ${YELLOW}! ACTION: Configure Iran panel outbound → 127.0.0.1:${_first_vio}${NC}"
+            else
+                echo -e "  Xray:       ${BOLD}127.0.0.1:${_xray_port} (SOCKS5)${NC}"
+                echo ""
+                echo -e "  ${GREEN}✓ Xray SOCKS5 proxy installed and running${NC}"
+            fi
             echo ""
             echo -e "${YELLOW}╔═══════════════════════════════════════════════════════════════╗${NC}"
             echo -e "${YELLOW}║  ${BOLD}CLIENT CONNECTION INFO - SAVE THIS!${NC}${YELLOW}                          ║${NC}"
