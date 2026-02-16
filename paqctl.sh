@@ -1575,7 +1575,7 @@ setup_xray_for_gfk() {
     local target_port
     target_port=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f2 | cut -d, -f1)
 
-    if pgrep -x xray &>/dev/null || pgrep -x xray-linux-amd64 &>/dev/null; then
+    if pgrep -x xray &>/dev/null || pgrep -f "xray-linux" &>/dev/null; then
         # Check if this is paqctl's own standalone Xray (not a real panel)
         if _is_paqctl_standalone_xray; then
             log_info "Existing Xray is paqctl's standalone install — reconfiguring..."
@@ -6242,7 +6242,7 @@ setup_xray_for_gfk() {
     local target_port
     target_port=$(echo "${GFK_PORT_MAPPINGS:-14000:443}" | cut -d: -f2 | cut -d, -f1)
 
-    if pgrep -x xray &>/dev/null || pgrep -x xray-linux-amd64 &>/dev/null; then
+    if pgrep -x xray &>/dev/null || pgrep -f "xray-linux" &>/dev/null; then
         # Check if this is paqctl's own standalone Xray (not a real panel)
         if _is_paqctl_standalone_xray; then
             log_info "Existing Xray is paqctl's standalone install — reconfiguring..."
